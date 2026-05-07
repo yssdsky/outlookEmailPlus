@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from typing import Any
 
 from flask import jsonify, request
@@ -119,55 +118,6 @@ def api_generate_temp_email() -> Any:
             exc.message,
             status=exc.status,
             message_en="Failed to create temp mailbox. Please try again later",
-        )
-
-
-@login_required
-def api_import_temp_email() -> Any:
-    """导入已有临时邮箱（支持可选 JWT 直传 + 指定 provider）"""
-    data = request.json or {}
-    email = str(data.get("email") or "").strip()
-    jwt_token = str(data.get("jwt") or "").strip() or None
-    provider_name = str(data.get("provider_name") or "").strip() or None
-
-    if not email:
-        return build_error_response(
-            "INVALID_PARAM",
-            "邮箱地址不能为空",
-            status=400,
-            message_en="Email address is required",
-        )
-
-    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
-        return build_error_response(
-            "INVALID_PARAM",
-            "邮箱格式不正确",
-            status=400,
-            message_en="Invalid email format",
-        )
-
-    try:
-        # 如果提供了 JWT，直接落库（跳过 CF Worker 创建步骤）
-        if jwt_token:
-            mailbox = temp_mail_service.import_user_mailbox_with_jwt(email, jwt_token, provider_name=provider_name)
-        else:
-            mailbox = temp_mail_service.import_user_mailbox(email, allow_local_fallback=False, provider_name=provider_name)
-        log_audit("import", "temp_email", email, "导入临时邮箱")
-        return jsonify(
-            {
-                "success": True,
-                "email": mailbox["email"],
-                "message": "临时邮箱导入成功",
-                "message_en": "Temp mailbox imported successfully",
-            }
-        )
-    except TempMailError as exc:
-        logger.error(f"临时邮箱导入失败: {exc.message}, email={email}")
-        return build_error_response(
-            exc.code,
-            exc.message,
-            status=exc.status,
-            message_en="Failed to import temp mailbox",
         )
 
 

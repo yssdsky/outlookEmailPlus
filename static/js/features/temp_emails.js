@@ -254,23 +254,6 @@
         // 生成临时邮箱
         function onTempEmailProviderChange(selectedProvider) {
             loadTempEmailOptions(false, selectedProvider);
-            // 仅 Cloudflare Temp Mail 显示导入按钮
-            const importBtn = document.getElementById('tempEmailImportBtn');
-            if (importBtn) {
-                importBtn.style.display = (selectedProvider === 'cloudflare_temp_mail') ? '' : 'none';
-            }
-        }
-
-        // 显示导入临时邮箱模态框
-        function showImportTempEmailModal() {
-            const textarea = document.getElementById('tempEmailImportInput');
-            if (textarea) textarea.value = '';
-            document.getElementById('importTempEmailModal').classList.add('show');
-        }
-
-        // 隐藏导入临时邮箱模态框
-        function hideImportTempEmailModal() {
-            document.getElementById('importTempEmailModal').classList.remove('show');
         }
 
         async function generateTempEmail() {
@@ -311,80 +294,6 @@
             } catch (error) {
                 showToast('生成临时邮箱失败', 'error');
             }
-        }
-
-        // 导入临时邮箱（批量，支持 邮箱----JWT 格式）
-        async function importTempEmail() {
-            const textarea = document.getElementById('tempEmailImportInput');
-            const raw = (textarea && textarea.value || '').trim();
-            if (!raw) {
-                showToast(translateAppTextLocal('请输入邮箱信息'), 'warning');
-                return;
-            }
-
-            // 获取当前选择的 provider
-            const providerSelect = document.getElementById('tempEmailProviderSelect');
-            const providerName = providerSelect ? providerSelect.value : '';
-
-            // 逐行解析，过滤空行和注释
-            const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-            if (lines.length === 0) {
-                showToast(translateAppTextLocal('请输入邮箱信息'), 'warning');
-                return;
-            }
-
-            let imported = 0;
-            let failed = 0;
-            const total = lines.length;
-            showToast(`${translateAppTextLocal('正在导入…')} (0/${total})`, 'info');
-
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                // 解析 邮箱----JWT 格式
-                const parts = line.split('----');
-                const email = (parts[0] || '').trim();
-                const jwt = (parts[1] || '').trim();
-
-                if (!email) {
-                    failed++;
-                    continue;
-                }
-
-                try {
-                    const body = { email, provider_name: providerName };
-                    if (jwt) body.jwt = jwt;
-
-                    const response = await fetch('/api/temp-emails/import', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body)
-                    });
-                    const data = await response.json();
-
-                    if (data.success) {
-                        imported++;
-                    } else {
-                        failed++;
-                        console.warn(`导入失败: ${email}`, data);
-                    }
-                } catch (error) {
-                    failed++;
-                    console.warn(`导入异常: ${email}`, error);
-                }
-
-                // 更新进度
-                showToast(`${translateAppTextLocal('正在导入…')} (${i + 1}/${total})`, 'info');
-            }
-
-            // 关闭模态框、刷新列表
-            hideImportTempEmailModal();
-            delete accountsCache['temp'];
-            loadTempEmails(true);
-
-            const resultMsg = imported > 0
-                ? `导入完成：成功 ${imported} 个` + (failed > 0 ? `，失败 ${failed} 个` : '')
-                : `导入失败：共 ${failed} 个`;
-            showToast(resultMsg, imported > 0 ? 'success' : 'error');
         }
 
         // 选择临时邮箱

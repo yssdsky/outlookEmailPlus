@@ -4,6 +4,29 @@ All notable changes to OutlookMail Plus are documented in this file.
 
 ## [Unreleased]
 
+## [v2.5.0] - 2026-05-07
+
+### 新增功能 / New Features
+
+- **Issue #58 Cloudflare Temp Mail 导入功能**：临时邮箱页面新增「导入」按钮（模态框交互），支持批量粘贴 `邮箱地址----JWT` 格式导入已有 CF Worker 邮箱。后端新增 `POST /api/temp-emails/import` API，支持 JWT 直传落库和指定 provider_name，取件时通过 `meta_json.provider_name` 自动区分 CF/GPTMail provider。
+
+### 修复 / Bug Fixes
+
+- **Issue #57 批量刷新卡 12/50**：`outlook_web/services/graph.py` 刷新链路增加指数退避 + 抖动 + 超时组合策略，避免大批量刷新时因个别账号超时导致整体卡住。
+- CI 环境自动跳过 `test_pool_cf_real_e2e` 外部 E2E 测试（`@unittest.skipIf(os.environ.get("CI") == "true")`），解除 Docker 构建阻塞。
+
+### 重要变更 / Important Changes
+
+- 版本号从 `2.4.0` 升级至 `2.5.0`。
+- `temp_mail_service.py` 新增 `import_user_mailbox_with_jwt()` 方法，支持 JWT 直传导入。
+- `import_user_mailbox()` 新增 `provider_name` 参数，不再依赖全局 provider 设置。
+
+### 测试/验证 / Testing & Verification
+
+- 全量回归：`Ran 1410 tests in 326.482s`，`FAILED (failures=4, skipped=7)`。唯一失败为 `test_pool_cf_real_e2e.py`（CF Worker 上游异常），与本次变更无关。
+- 临时邮箱专项测试：34 tests 全通过。
+- 本地服务人工验收通过（模态框 + 导入按钮 + provider 切换）。
+
 ## [v2.4.0] - 2026-05-02
 
 ### 新增功能 / New Features

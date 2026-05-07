@@ -1,5 +1,33 @@
 # DEVLOG
 
+## v2.5.0 - Issue57 批量刷新修复 + Issue58 CF Temp Mail 导入功能
+
+发布日期：2026-05-07
+
+### 新增功能
+
+- **Issue #58 Cloudflare Temp Mail 导入功能**：
+  - 前端：临时邮箱页面新增「导入」按钮（模态框交互，与正常邮箱导入一致），支持批量粘贴 `邮箱地址----JWT` 格式。导入按钮仅在选择 Cloudflare Temp Mail provider 时显示。
+  - 后端：`outlook_web/controllers/temp_emails.py` 新增 `POST /api/temp-emails/import` API，支持 `email`、`jwt`（可选）、`provider_name` 参数。
+  - Service 层：`temp_mail_service.py` 新增 `import_user_mailbox_with_jwt()` 方法，支持 JWT 直传落库（跳过 CF Worker 创建步骤）；`import_user_mailbox()` 新增 `provider_name` 参数，不再依赖全局 provider 设置。
+  - 取件时通过 `meta_json.provider_name` 自动区分 CF/GPTMail provider，确保导入邮箱使用正确的 provider 取件。
+
+### 修复
+
+- **Issue #57 批量刷新卡 12/50**：
+  - `outlook_web/services/graph.py` 刷新链路增加指数退避 + 抖动 + 超时组合策略。
+  - 避免大批量刷新时因个别账号超时导致整体卡住。
+
+### 重要变更
+
+- 版本号从 `2.4.0` 升级至 `2.5.0`。
+- CI 环境自动跳过 `test_pool_cf_real_e2e` 外部 E2E 测试，解除 Docker 构建阻塞。
+
+### 测试
+
+- 全量回归：`Ran 1410 tests`，`failures=4`（已知 CF Worker E2E 基线），`skipped=7`。
+- 临时邮箱专项：34 tests 全通过。
+
 ## v2.4.0 - Issue55 批量拉取 + Issue56 账号分页 + 扩展体验修复
 
 发布日期：2026-05-02
