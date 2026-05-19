@@ -235,9 +235,7 @@ class PoolAdminI18nPatternTests(PoolAdminUIv2Base):
 
     def test_pattern_total_page_info(self):
         """共 N 条 · 第 M/P 页 → Total $1 · Page $2/$3"""
-        self._assert_pattern_entry(
-            self.js, "^共 (\\d+) 条 · 第 (\\d+)\\/(\\d+) 页$", "Total $1 · Page $2/$3"
-        )
+        self._assert_pattern_entry(self.js, "^共 (\\d+) 条 · 第 (\\d+)\\/(\\d+) 页$", "Total $1 · Page $2/$3")
 
     def test_pattern_total_only(self):
         """共 N 条 → Total $1"""
@@ -245,21 +243,15 @@ class PoolAdminI18nPatternTests(PoolAdminUIv2Base):
 
     def test_pattern_batch_confirm(self):
         """确定对 N 条记录执行「…」吗？ → Confirm … on $1 records?"""
-        self._assert_pattern_entry(
-            self.js, "^确定对 (\\d+) 条记录执行「(.+)」吗？$", "Confirm $2 on $1 records?"
-        )
+        self._assert_pattern_entry(self.js, "^确定对 (\\d+) 条记录执行「(.+)」吗？$", "Confirm $2 on $1 records?")
 
     def test_pattern_done_summary(self):
         """完成: N 成功, M 失败 → Done: $1 success, $2 failed"""
-        self._assert_pattern_entry(
-            self.js, "^完成: (\\d+) 成功, (\\d+) 失败$", "Done: $1 success, $2 failed"
-        )
+        self._assert_pattern_entry(self.js, "^完成: (\\d+) 成功, (\\d+) 失败$", "Done: $1 success, $2 failed")
 
     def test_pattern_single_confirm(self):
         """确定对 email 执行「…」吗？ → Confirm … on $1?"""
-        self._assert_pattern_entry(
-            self.js, "^确定对 (.+) 执行「(.+)」吗？$", "Confirm $2 on $1?"
-        )
+        self._assert_pattern_entry(self.js, "^确定对 (.+) 执行「(.+)」吗？$", "Confirm $2 on $1?")
 
 
 # ===== 4. i18n 回归保护 =====

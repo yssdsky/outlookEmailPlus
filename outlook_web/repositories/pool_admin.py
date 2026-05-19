@@ -50,15 +50,13 @@ def list_accounts(
     normalized_search = str(search or "").strip().lower()
     if normalized_search:
         like_value = f"%{normalized_search}%"
-        where_clauses.append(
-            """
+        where_clauses.append("""
             (
                 LOWER(COALESCE(a.email, '')) LIKE ?
                 OR LOWER(COALESCE(a.remark, '')) LIKE ?
                 OR LOWER(COALESCE(a.email_domain, '')) LIKE ?
             )
-            """
-        )
+            """)
         params.extend([like_value, like_value, like_value])
 
     where_sql = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
