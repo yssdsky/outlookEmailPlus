@@ -157,6 +157,49 @@ Phase 1 首屏降载完成后，继续执行 Phase 2 接口缓存与查询收敛
 
 ---
 
+#### 286C. Issue #69 — Phase 3 gevent 兼容性评估完成
+
+**时间**：2026-05-22
+
+**操作背景**：
+Phase 2 完成后，按照 TODO 执行 Phase 3 gevent 单 worker 评估。目标是在不动 scheduler 的前提下，评估 gevent 作为部署层中间缓解方案的可行性与风险。
+
+**获取上下文**：
+1. 读取 `requirements.txt` — 确认现有依赖清单
+2. 读取 `outlook_web/app.py` — 确认 app 创建流程与 Blueprint 注册
+3. 读取 `outlook_web/services/scheduler.py` — 确认 BackgroundScheduler 线程模型、job 列表、time.sleep 阻塞点
+4. 搜索 SSE 流式接口 — 3 个 `text/event-stream` 端点（refresh_all/scheduled/selected）
+5. 搜索 ThreadPoolExecutor — 2 处（telegram_push.py + imap.py）
+6. 搜索 threading.Lock — 3 处（oauth_tool + imap + channel_capability_cache）
+7. 搜索 urllib.request 外网调用 — system.py 多处
+
+**评估结论**：
+
+| 风险项 | 等级 | 说明 |
+|--------|------|------|
+| APScheduler BackgroundScheduler | 🔴 高 | monkey patch 后线程变 greenlet，6 个 job 可能全部受影响 |
+| ThreadPoolExecutor | 🟡 中 | `as_completed` 可能失序/死锁 |
+| threading.Lock × 3 | 🟡 中 | 替换为 BoundedSemaphore，公平性可能变化 |
+| SQLite WAL 共享 | 🟡 中 | greenlet 与原生线程共享连接存在竞态风险 |
+| SSE/yield 流式 | 🟢 低 | gevent 对生成器协程天然友好 |
+| urllib.request | 🟢 低 | monkey patch 后非阻塞，标准收益 |
+
+**决策**：**建议跳过 gevent，直接进入 Phase 4 scheduler 拆分**。
+
+理由：
+1. Phase 1+2 已大幅降低首屏负载，当前的瓶颈已从"请求并发排队"转移到"单请求开销"
+2. gevent 引入的调度器风险 > 预期收益
+3. 正确的演进路径：先拆 scheduler → 再安全地多 worker 或 gevent
+
+**文档产出**：
+- 新增 `docs/DEV/2026-05-22-Issue69-gevent兼容性评估报告.md`（~250 行，含 6 个风险项、8 项验证矩阵、替代方案）
+
+**是否修改业务代码**：否（仅文档分析）
+
+**是否启动/停止服务**：否
+
+---
+
 #### 285. Issue #69 实施提示词：为后续 AI/协作者输出统一执行入口
 
 **时间**：2026-05-22
