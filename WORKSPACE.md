@@ -3,6 +3,35 @@
 > 本文档记录项目开发过程中的操作日志，按日期倒序排列。
 
 ---
+## 2026-06-13
+
+### 操作记录
+
+#### 280. CodeXWeb VPS 部署 outlookEmailPlus
+
+**时间**：2026-06-13 05:37 UTC（2026-06-13 13:37 CST）
+
+**操作背景**：用户要求将 `ZeroPointSix/outlookEmailPlus` 部署到配置的 VPS。
+
+**执行内容**：
+
+- VPS 路径：`/srv/outlook-email-plus`；检出 `main` commit `37e939b`。
+- 安装 Docker Compose v2，使用 `ghcr.io/zeropointsix/outlook-email-plus:latest` 启动 app。
+- 生成 VPS 本地 `.env`，绑定 `127.0.0.1:5001`，持久化 `data/`、`.runtime/`、`plugins/`。
+- 新增部署层 `docker-compose.override.yml`，为 Watchtower 设置 `DOCKER_API_VERSION=1.44`。
+- 新增 nginx vhost `outlook.137-184-23-118.sslip.io`，通过 certbot 启用 HTTPS 与 HTTP -> HTTPS 跳转。
+
+**验证**：
+
+- `https://outlook.137-184-23-118.sslip.io/healthz` 返回 HTTP/2 200，`status=ok`，`version=2.7.0`。
+- 首页 `/` 返回 302 到 `/login`，符合登录保护预期。
+- `outlook-email-plus` 与 `watchtower` 容器均为 healthy。
+- TLS 证书有效期至 2026-09-11 04:38:33 UTC，并已启用自动续期。
+
+**是否改动代码**：否（部署与文档留痕；无应用代码改动）
+
+---
+
 
 ## 2026-06-11
 
